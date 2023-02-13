@@ -21,7 +21,7 @@ function Category (){
     const [parentCategories, setParentCategories] = useState([]);
     // Add Category Initialize ... 
     const [catName, setCatName] = useState('');
-    const [catParentId, setParentId] = useState('');
+    const [parentId, setParentId] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     const [show, setShow] = useState(false);
@@ -75,7 +75,7 @@ function Category (){
         setIsSaving(true);
         axios.post('http://127.0.0.1:8000/api/categories', {
             name: catName,
-            parent_id: catParentId
+            parent_id: parentId
           })
           .then(function (response) {
             Swal.fire({
@@ -188,7 +188,7 @@ function Category (){
                         <Form.Group className="mb-3">
                             <Form.Label>Category Name:</Form.Label>
                             <Form.Control
-                                onChange={(event)=>{setCatName(event.target.value)}}
+                                onChange={(e)=>setCatName(e.target.value)}
                                 value={catName}
                                 type="text"
                                 placeholder="Category Name"
@@ -224,22 +224,19 @@ function Category (){
                             && 
                             <Form.Group className="mb-3">
                                 <Form.Label>Parent Category:</Form.Label>
-                                <Form.Control as="select">
+                                <Form.Control as="select"                                             onChange={(e)=>setParentId(e.target.value)}>
                                     <option>Select Parent Category</option>
                                     {
-                                        parentCategories.map((parentCategory, key) => {
-                                            return (
-                                                <option
-                                                key={key} 
-                                                onChange={(event)=>{setParentId(event.target.value)}}
-                                                value={parentCategory.id}
-                                                id="parent_id"
-                                                name="parent_id" 
-                                                >
-                                                    {parentCategory.name}
-                                                </option>
-                                            )
-                                        })
+                                        parentCategories.map((parentCategory, key) => (
+                                            <option
+                                            key={key}
+                                            value={parentCategory.id}
+                                            id="parent_id"
+                                            name="parent_id" 
+                                            >
+                                                {parentCategory.name}
+                                            </option>
+                                        ))
                                     }
                                 </Form.Control>
                             </Form.Group>
