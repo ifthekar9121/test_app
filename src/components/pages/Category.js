@@ -116,22 +116,28 @@ function Category (){
 
     // Category Edit ... 
         const fetchCategoryEdit = (editCategoryId) => {
-            axios.get(`${BaseUrl}/api/categories/${editCategoryId}`)
-            .then(function (res) {
-                let category = res.data.data;
-                console.log(category);
-                setEditCatName(category.name);
-                setEditParentId(category.parent_id);
+        axios.get(`${BaseUrl}/api/categories/${editCategoryId}`)
+        .then(function (res) {
+            console.log(res);
+            let category = res.data.data;
+            setEditCatName(category.name);
+            setEditParentId(category.parent_id);
+            if(category.parent_id !== 0){
+                setDisplayParentCategory(true);
+            }
+            else{
+                setDisplayParentCategory(false);
+            }
+        })
+        .catch(function (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'An Error Occured!',
+                showConfirmButton: false,
+                timer: 1500
             })
-            .catch(function (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'An Error Occured!',
-                    showConfirmButton: false,
-                    timer: 1500
-                })
-            })
-        }
+        })
+    }
     // Category Edit ... 
 
     // Category Delete ... 
@@ -176,7 +182,7 @@ function Category (){
                     <div className='float-end float-right mb-4'>
                         <Button onClick={handleAddCategoryShow} variant="primary">Add Category</Button>
                     </div>
-                    <Table id="category" striped bordered hover>
+                    <Table id="category" striped bordered hover responsive>
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -195,15 +201,15 @@ function Category (){
                                         <td>{category.name}</td>
                                         <td>{category.type}</td>
                                         <td>{category.parent_id}</td>
-                                        <td>
-                                            <Button variant="primary"><FontAwesomeIcon icon={faEye} /></Button>
+                                        <td className='d-flex flex-*-fill'>
+                                            <Button variant="primary" className='m-1' size='sm'><FontAwesomeIcon icon={faEye} /></Button>
                                             <Button onClick={() => {
                                                 fetchCategoryEdit(category.id)
                                                 handleEditCategoryShow()
-                                            }} variant="warning">
+                                            }} variant="warning" className='m-1' size='sm'>
                                                 <FontAwesomeIcon icon={faPenToSquare} />
                                             </Button>
-                                            <Button variant="danger" onClick={() => handleCategoryDelete(category.id)}>
+                                            <Button variant="danger" className='m-1' size='sm' onClick={() => handleCategoryDelete(category.id)}>
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </Button>
                                         </td>
@@ -324,7 +330,7 @@ function Category (){
                             type="switch"
                             id="custom-switch"
                             label="Make As Child"
-                            checked={editParentId !== 0 ? true : displayParentCategory}
+                            checked={displayParentCategory}
                             onChange={(e) => setDisplayParentCategory(e.target.checked)} 
                         />
                         {
