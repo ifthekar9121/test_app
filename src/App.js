@@ -7,6 +7,7 @@ import {
   Switch,
   Route
 } from "react-router-dom";
+import GlobalContextProvider from './components/contexts/GlobalContextProvider';
 
 
 function App() {
@@ -15,7 +16,11 @@ function App() {
       <Navigation/>
       <Switch>
         <Route exact path="/" component={Home} />
-        <Route exact path="/category" component={Category} />
+        <Route exact path="/category">
+          <GlobalContextProvider>
+            <Category />
+          </GlobalContextProvider>
+        </Route>
         <Route exact path="/category/add" component={AddCategory} />
       </Switch>
     </>

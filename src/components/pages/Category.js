@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import { Button, Form, Modal, Table } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -9,35 +9,46 @@ import "datatables.net-dt/js/dataTables.dataTables"
 import "datatables.net-dt/css/jquery.dataTables.min.css"
 
 import $ from 'jquery';
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 
 //For API Requests
 import axios from 'axios';
+import { GlobalContext } from '../contexts/GlobalContextProvider';
+
   
 
 function Category (){
-
+    // const [id, setId] = useState(useParams().id);
     const [categories, setCategories] = useState([]);
     const [parentCategories, setParentCategories] = useState([]);
+    const { BaseUrl } = useContext(GlobalContext)
     // Add Category Initialize ... 
     const [catName, setCatName] = useState('');
     const [parentId, setParentId] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    const [show, setShow] = useState(false);
-    const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
+    // Edit Category Initialize ... 
+    const [editCatName, setEditCatName] = useState('');
+    const [editParentId, setEditParentId] = useState('');
+
+    const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+    const handleAddCategoryClose = () => setShowAddCategoryModal(false);
+    const handleAddCategoryShow = () => setShowAddCategoryModal(true);
+
+    const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+    const handleEditCategoryClose = () => setShowEditCategoryModal(false);
+    const handleEditCategoryShow = () => setShowEditCategoryModal(true);
 
     const [displayParentCategory, setDisplayParentCategory] = useState(false);
 
     useEffect(() => {
         fetchAllCategories();
-        fetchAllParentCategories()
-    }, [])
+        fetchAllParentCategories();
+    }, [displayParentCategory])
 
     // Categories Lists read ... 
     const fetchAllCategories = () => {
-        axios.get('http://127.0.0.1:8000/api/categories')
+        axios.get(`${BaseUrl}/api/categories`)
         .then(function (res) {
             setCategories(res.data.data);
         })
@@ -56,15 +67,15 @@ function Category (){
 
     //Parent categories lists ... 
     const fetchAllParentCategories = () => {
-        axios.get('http://127.0.0.1:8000/api/get_parent_categories')
+        axios.get(`${BaseUrl}/api/get_parent_categories`)
         .then(function (res) {
-            // console.log(res.data.data);
             setParentCategories(res.data.data);
         })
         .catch(function (error) {
             console.log(error)
         })
     }
+    //Parent categories lists ... 
 
     // const categoryTypes = [
     //     "Incomes", "Assets&Liabilities", "Investment", "Expenses", "Rebates"
@@ -73,7 +84,7 @@ function Category (){
     // Category Add ... 
     const handleCategorySave = () => {
         setIsSaving(true);
-        axios.post('http://127.0.0.1:8000/api/categories', {
+        axios.post(`${BaseUrl}/api/categories`, {
             name: catName,
             parent_id: parentId
           })
@@ -87,8 +98,9 @@ function Category (){
             setIsSaving(false);
             setCatName('');
             setParentId('');
-            handleClose();
+            handleAddCategoryClose();
             fetchAllCategories()
+            setDisplayParentCategory(false)
           })
           .catch(function (error) {
             Swal.fire({
@@ -102,6 +114,26 @@ function Category (){
     }
     // Category Add ... 
 
+    // Category Edit ... 
+        const fetchCategoryEdit = (editCategoryId) => {
+            axios.get(`${BaseUrl}/api/categories/${editCategoryId}`)
+            .then(function (res) {
+                let category = res.data;
+                console.log(category);
+                // setCatName(category.name);
+                // setParentId(category.parent_id);
+            })
+            .catch(function (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'An Error Occured!',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+            })
+        }
+    // Category Edit ... 
+
     // Category Delete ... 
     const handleCategoryDelete = (id) => {
         Swal.fire({
@@ -114,7 +146,7 @@ function Category (){
             confirmButtonText: 'Yes, delete it!'
           }).then((result) => {
             if (result.isConfirmed) {
-                axios.delete(`http://127.0.0.1:8000/api/categories/${id}`)
+                axios.delete(`${BaseUrl}/api/categories/${id}`)
                 .then(function (response) {
                     Swal.fire({
                         icon: 'success',
@@ -142,7 +174,7 @@ function Category (){
             <div className="container">
                 <div className='mt-5'>
                     <div className='float-end float-right mb-4'>
-                        <Button onClick= {handleShow} variant="primary">Add Category</Button>{' '}
+                        <Button onClick={handleAddCategoryShow} variant="primary">Add Category</Button>
                     </div>
                     <Table id="category" striped bordered hover>
                         <thead>
@@ -164,11 +196,16 @@ function Category (){
                                         <td>{category.type}</td>
                                         <td>{category.parent_id}</td>
                                         <td>
-                                            <Button as={Link} to="/category/add" variant="primary"><FontAwesomeIcon icon={faEye} /></Button>{' '}
-                                            <Button as={Link} to="/category/add" variant="warning"><FontAwesomeIcon icon={faPenToSquare} />
-                                            </Button>{' '}
-                                            <Button variant="danger" onClick={()=>handleCategoryDelete(category.id)}><FontAwesomeIcon icon={faTrash} />
-                                            </Button>{' '}
+                                            <Button variant="primary"><FontAwesomeIcon icon={faEye} /></Button>
+                                            <Button onClick={() => {
+                                                fetchCategoryEdit(category.id)
+                                                handleEditCategoryShow()
+                                            }} variant="warning">
+                                                <FontAwesomeIcon icon={faPenToSquare} />
+                                            </Button>
+                                            <Button variant="danger" onClick={() => handleCategoryDelete(category.id)}>
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            </Button>
                                         </td>
                                     </tr>
                             
@@ -179,7 +216,8 @@ function Category (){
                 </div>
             </div>
 
-            <Modal show={show} onHide={handleClose}>
+            {/* Start Add Category Modal ...  */}
+            <Modal show={showAddCategoryModal} onHide={handleAddCategoryClose}>
                 <Modal.Header closeButton>
                     <Modal.Title>Add New Category</Modal.Title>
                 </Modal.Header>
@@ -215,7 +253,7 @@ function Category (){
                         <Form.Check 
                             type="switch"
                             id="custom-switch"
-                            label="Check this switch"
+                            label="Make As Child"
                             checked={displayParentCategory}
                             onChange={(e) => setDisplayParentCategory(e.target.checked)} 
                         />
@@ -224,7 +262,8 @@ function Category (){
                             && 
                             <Form.Group className="mb-3">
                                 <Form.Label>Parent Category:</Form.Label>
-                                <Form.Control as="select"                                             onChange={(e)=>setParentId(e.target.value)}>
+                                <Form.Control as="select"                                          
+                                onChange={(e)=>setParentId(e.target.value)}>
                                     <option>Select Parent Category</option>
                                     {
                                         parentCategories.map((parentCategory, key) => (
@@ -249,7 +288,7 @@ function Category (){
                         
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
+                        <Button variant="secondary" onClick={handleAddCategoryClose}>
                         Close
                         </Button>
                         <Button variant="primary" type="button"
@@ -259,6 +298,70 @@ function Category (){
                     </Modal.Footer>
                 </Form>
             </Modal>
+            {/* End Add Category Modal ...  */}
+
+            {/* Start Edit Category Modal ...  */}
+            <Modal show={showEditCategoryModal} onHide={handleEditCategoryClose}>
+                <Modal.Header closeButton>
+                <Modal.Title>Edit Category</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                <Form.Group className="mb-3">
+                            <Form.Label>Category Name:</Form.Label>
+                            <Form.Control
+                                onChange={(e)=>setEditCatName(e.target.value)}
+                                value={editCatName}
+                                type="text"
+                                placeholder="Category Name"
+                                required
+                                autoFocus
+                                id="name"
+                                name="name"
+                            />
+                        </Form.Group>
+
+                        <Form.Check 
+                            type="switch"
+                            id="custom-switch"
+                            label="Make As Child"
+                            checked={displayParentCategory}
+                            onChange={(e) => setDisplayParentCategory(e.target.checked)} 
+                        />
+                        {
+                            displayParentCategory 
+                            && 
+                            <Form.Group className="mb-3">
+                                <Form.Label>Parent Category:</Form.Label>
+                                <Form.Control as="select"
+                                value={editParentId}                                          
+                                onChange={(e)=>setEditParentId(e.target.value)}>
+                                    <option>Select Parent Category</option>
+                                    {
+                                        parentCategories.map((parentCategory, key) => (
+                                            <option
+                                            key={key}
+                                            value={parentCategory.id}
+                                            id="parent_id"
+                                            name="parent_id" 
+                                            >
+                                                {parentCategory.name}
+                                            </option>
+                                        ))
+                                    }
+                                </Form.Control>
+                            </Form.Group>
+                        }
+                </Modal.Body>
+                <Modal.Footer>
+                <Button variant="secondary" onClick={handleEditCategoryClose}>
+                    Close
+                </Button>
+                <Button variant="primary" onClick={handleEditCategoryClose}>
+                    Update
+                </Button>
+                </Modal.Footer>
+            </Modal>
+            {/* End Edit Category Modal ...  */}
         </>
     )
 }
