@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react'
-import { Button, Form, Modal, Table } from 'react-bootstrap';
+import { Button, Form, Modal, Table, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
@@ -28,8 +28,14 @@ function Category (){
     const [isSaving, setIsSaving] = useState(false);
 
     // Edit Category Initialize ... 
+    const [editCatId, setEditCatId] = useState();
     const [editCatName, setEditCatName] = useState('');
     const [editParentId, setEditParentId] = useState('');
+
+    // Show Single Category Initialize ... 
+    const [showCatName, setShowCatName] = useState('');
+    const [showCatType, setShowCatType] = useState('');
+    const [showParentId, setShowParentId] = useState('');
 
     const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
     const handleAddCategoryClose = () => setShowAddCategoryModal(false);
@@ -38,6 +44,11 @@ function Category (){
     const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
     const handleEditCategoryClose = () => setShowEditCategoryModal(false);
     const handleEditCategoryShow = () => setShowEditCategoryModal(true);
+
+    const [showSingleCategoryModal, setShowSingleCategoryModal] = useState(false);
+    const handleSingleCategoryClose = () => setShowSingleCategoryModal(false);
+    const handleSingleCategoryShow = () => setShowSingleCategoryModal(true);
+    
 
     const [displayParentCategory, setDisplayParentCategory] = useState(false);
 
@@ -118,8 +129,9 @@ function Category (){
         const fetchCategoryEdit = (editCategoryId) => {
         axios.get(`${BaseUrl}/api/categories/${editCategoryId}`)
         .then(function (res) {
-            console.log(res);
+            // console.log(res);
             let category = res.data.data;
+            setEditCatId(category.id);
             setEditCatName(category.name);
             setEditParentId(category.parent_id);
             if(category.parent_id !== 0){
@@ -138,7 +150,59 @@ function Category (){
             })
         })
     }
-    // Category Edit ... 
+    // Category Edit ...
+    
+    // Category update ... 
+    const handleCategoryUpdate = (updateCategoryId) => {
+        setIsSaving(true);
+        axios.patch(`${BaseUrl}/api/categories/${updateCategoryId}`, {
+            name: editCatName,
+            parent_id: editParentId
+        })
+        .then(function (response) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Category updated successfully!',
+                showConfirmButton: false,
+                timer: 1500
+            })
+            setIsSaving(false);
+            setCatName('');
+            setParentId('');
+            handleEditCategoryClose();
+            fetchAllCategories();
+            setDisplayParentCategory(false);
+        })
+        .catch(function (error) {
+            Swal.fire({
+                 icon: 'error',
+                title: 'An Error Occured!',
+                showConfirmButton: false,
+                timer: 1500
+            })
+            setIsSaving(false)
+        });
+    }
+    // Category update ... 
+
+    const fetchSingleCategoryShow = (showCategoryId) => {
+        axios.get(`${BaseUrl}/api/categories/${showCategoryId}`)
+        .then(function (res) {
+            // console.log(res);
+            let category = res.data.data;
+            setShowCatName(category.name);
+            setShowCatType(category.type);
+            setShowParentId(category.parent_id);
+        })
+        .catch(function (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'An Error Occured!',
+                showConfirmButton: false,
+                timer: 1500
+            })
+        });
+    }
 
     // Category Delete ... 
     const handleCategoryDelete = (id) => {
@@ -202,7 +266,12 @@ function Category (){
                                         <td>{category.type}</td>
                                         <td>{category.parent_id}</td>
                                         <td className='d-flex flex-*-fill'>
-                                            <Button variant="primary" className='m-1' size='sm'><FontAwesomeIcon icon={faEye} /></Button>
+                                            <Button 
+                                            onClick={() => {
+                                                fetchSingleCategoryShow(category.id)
+                                                handleSingleCategoryShow()
+                                            }}
+                                            variant="primary" className='m-1' size='sm'><FontAwesomeIcon icon={faEye} /></Button>
                                             <Button onClick={() => {
                                                 fetchCategoryEdit(category.id)
                                                 handleEditCategoryShow()
@@ -270,7 +339,7 @@ function Category (){
                                 <Form.Label>Parent Category:</Form.Label>
                                 <Form.Control as="select"                                          
                                 onChange={(e)=>setParentId(e.target.value)}>
-                                    <option>Select Parent Category</option>
+                                    <option value="0">Select Parent Category</option>
                                     {
                                         parentCategories.map((parentCategory, key) => (
                                             <option
@@ -341,7 +410,7 @@ function Category (){
                                 <Form.Control as="select"
                                 value={editParentId}                                          
                                 onChange={(e)=>setEditParentId(e.target.value)}>
-                                    <option>Select Parent Category</option>
+                                    <option value="0">Select Parent Category</option>
                                     {
                                         parentCategories.map((parentCategory, key) => (
                                             <option
@@ -362,12 +431,31 @@ function Category (){
                 <Button variant="secondary" onClick={handleEditCategoryClose}>
                     Close
                 </Button>
-                <Button variant="primary" onClick={handleEditCategoryClose}>
+                <Button variant="primary" onClick={() => handleCategoryUpdate(editCatId)}>
                     Update
                 </Button>
                 </Modal.Footer>
             </Modal>
             {/* End Edit Category Modal ...  */}
+
+            {/* Start Show Category Modal ...  */}
+            <Modal show={showSingleCategoryModal} onHide={handleSingleCategoryClose}>
+                <Modal.Header closeButton>
+                <Modal.Title>Show Single Category</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <h3>{showCatName}</h3>
+                    <p><b>Type: </b><Badge variant="info">{showCatType}</Badge>{' '}</p>
+                    <p><b>Parent Id/Name: </b><Badge variant="dark">{showParentId}</Badge>{' '}</p>
+                </Modal.Body>
+                <Modal.Footer>
+                <Button variant="secondary" onClick={handleSingleCategoryClose}>
+                    Close
+                </Button>
+                </Modal.Footer>
+            </Modal>
+            {/* End Show Category Modal ...  */}
+
         </>
     )
 }
