@@ -118,10 +118,10 @@ function Category (){
         const fetchCategoryEdit = (editCategoryId) => {
             axios.get(`${BaseUrl}/api/categories/${editCategoryId}`)
             .then(function (res) {
-                let category = res.data;
+                let category = res.data.data;
                 console.log(category);
-                // setCatName(category.name);
-                // setParentId(category.parent_id);
+                setEditCatName(category.name);
+                setEditParentId(category.parent_id);
             })
             .catch(function (error) {
                 Swal.fire({
@@ -324,7 +324,7 @@ function Category (){
                             type="switch"
                             id="custom-switch"
                             label="Make As Child"
-                            checked={displayParentCategory}
+                            checked={editParentId !== 0 ? true : displayParentCategory}
                             onChange={(e) => setDisplayParentCategory(e.target.checked)} 
                         />
                         {
